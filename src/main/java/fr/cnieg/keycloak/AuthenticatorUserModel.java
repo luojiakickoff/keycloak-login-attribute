@@ -18,39 +18,51 @@ public class AuthenticatorUserModel {
 
         if (authenticatorConfigModel != null && authenticatorConfigModel.getConfig() != null && authenticatorConfigModel.getConfig().get(
                 attributeKey2) != null && authenticatorConfigModel.getConfig().get(attributeRegex2) != null) {
-            ///support multi attributes used for login
-            ///solution 1
-            ///support user to set attribute as String with format like `attribute1;attribute2`
             String attributeKey = authenticatorConfigModel.getConfig().get(attributeKey2);
             String attributeRegex = authenticatorConfigModel.getConfig().get(attributeRegex2);
             if (userName.matches(attributeRegex)) {
-                String[] attributeKeyList = attributeKey.split("##");
-                for (int i = 0; i < attributeKeyList.length; i++) {
-                    List<UserModel> result = context.getSession().users()
-                        .searchForUserByUserAttributeStream(context.getRealm(), attributeKeyList[i], userName)
-                        .collect(Collectors.toList());
-                    if (result.size() == 1) {
-                        return result.get(0);
+                //TODO set attributeRegex with format like "*/*"
+
+                //Done discussion about attributeKey isContains "/"
+                /**
+                 * if attributeKey does not contain "/", which means attributeKey that it refers to org
+                 * if so, then loginAlias will only refer to username
+                 * it should get user by finduserbyusername
+                 */
+                String orgValue = userName.split("/")[0];
+                String loginAliasValue = userName.split("/")[1];
+                
+                //loginAlias as username, try to find user by username directly
+                UserModel userNameResult = context.getSession().users()
+                        .getUserByUsername(context.getRealm(), loginAliasValue);
+                if (userNameResult != null) {
+                    return userNameResult;
+                }
+                
+                if (attributeKey.contains("/")) {
+                    String org = attributeKey.split("/")[0];
+                    String loginAlias = attributeKey.split("/")[1];
+                    
+                    //user who uses loginAlias as username not exist, try to find user by loginAlias as attribute
+                    List<UserModel> loginAliasResult = context.getSession().users()
+                            .searchForUserByUserAttributeStream(context.getRealm(), loginAlias, loginAliasValue)
+                            .collect(Collectors.toList());
+                    if (loginAliasResult.size() == 1) {
+                        return loginAliasResult.get(0);
+                    }
+
+                    // more than one user have same loginAlias, and the result should depend on org
+                    if (loginAliasResult.size() > 1) {
+                        List<UserModel> orgResult = context.getSession().users()
+                                .searchForUserByUserAttributeStream(context.getRealm(), org, orgValue)
+                                .filter(c -> loginAliasResult.contains(c))
+                                .collect(Collectors.toList());
+                        if (orgResult.size() == 1) {
+                            return orgResult.get(0);
+                        }
                     }
                 }
             }
-            ///solution 2
-            ///set the setting of the attribute type with `ProviderConfigProperty.MULTIVALUED_STRING_TYPE`
-            ///TODO how to get the attribute as list
-            // List<String> attributeKeysString = authenticatorConfigModel.getConfig().get(attributeKey2);
-            // System.console().printf(attributeKeysString);
-            // List<String> attributeKeys = attributeKeysString.toList();
-            // String attributeRegex = authenticatorConfigModel.getConfig().get(attributeRegex2);
-            // if (userName.matches(attributeRegex)) {
-            //     for (String attributeKey : attributeKeys) {
-            //         List<UserModel> result = context.getSession().users()
-            //             .searchForUserByUserAttributeStream(context.getRealm(), attributeKey, userName)
-            //             .collect(Collectors.toList());
-            //         if (result.size() == 1) {
-            //             return result.get(0);
-            //         }
-            //     }
-            // }
         }
         return null;
     }
