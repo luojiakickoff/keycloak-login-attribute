@@ -22,11 +22,9 @@ public class AuthenticatorUserModel {
             String attributeKey = authenticatorConfigModel.getConfig().get(attributeKey2);
             String attributeRegex = authenticatorConfigModel.getConfig().get(attributeRegex2);
             if (userName.matches(attributeRegex)) {
-                //TODO set attributeRegex with format like "*/*"
-
-                //Done discussion about attributeKey isContains "/"
+                
                 /**
-                 * if attributeKey does not contain "/", which means attributeKey that it refers to org
+                 * if attributeKey does not contain "/", which means that attributeKey refers to org
                  * if so, then loginAlias will only refer to username
                  * it should get user by finduserbyusername
                  */
@@ -46,14 +44,18 @@ public class AuthenticatorUserModel {
                             if (attributes.contains(orgValue)) {
                                 return userNameResult;
                             }
+                            return null;
                         }
+                        return null;
                     }
                     List<String> attributes = userNameResult.getAttributes().get(attributeKey);
                     if (attributes.size() > 0) {
                         if (attributes.contains(orgValue)) {
                             return userNameResult;
                         }
+                        return null;
                     }
+                    return null;
                 }
                 
                 if (attributeKey.contains("/")) {
@@ -77,8 +79,11 @@ public class AuthenticatorUserModel {
                         if (orgResult.size() == 1) {
                             return orgResult.get(0);
                         }
+                        return null;
                     }
+                    return null;
                 }
+                return null;
             }
         }
         return null;
