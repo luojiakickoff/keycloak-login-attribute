@@ -40,22 +40,22 @@ public class AuthenticatorUserModel {
                         String org = attributeKey.split("/")[0];
                         
                         List<String> attributes = userNameResult.getAttributes().get(org);
+                        if (attributes != null) {
+                            if (attributes.size() > 0) {
+                                if (attributes.contains(orgValue)) {
+                                    return userNameResult;
+                                }
+                            }
+                        }
+                    }
+                    List<String> attributes = userNameResult.getAttributes().get(attributeKey);
+                    if (attributes != null) {
                         if (attributes.size() > 0) {
                             if (attributes.contains(orgValue)) {
                                 return userNameResult;
                             }
-                            return null;
                         }
-                        return null;
                     }
-                    List<String> attributes = userNameResult.getAttributes().get(attributeKey);
-                    if (attributes.size() > 0) {
-                        if (attributes.contains(orgValue)) {
-                            return userNameResult;
-                        }
-                        return null;
-                    }
-                    return null;
                 }
                 
                 if (attributeKey.contains("/")) {
@@ -79,11 +79,8 @@ public class AuthenticatorUserModel {
                         if (orgResult.size() == 1) {
                             return orgResult.get(0);
                         }
-                        return null;
                     }
-                    return null;
                 }
-                return null;
             }
         }
         return null;
