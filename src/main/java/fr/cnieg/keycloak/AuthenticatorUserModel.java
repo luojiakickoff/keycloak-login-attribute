@@ -5,6 +5,7 @@ import org.keycloak.models.AuthenticatorConfigModel;
 import org.keycloak.models.UserModel;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class AuthenticatorUserModel {
@@ -36,7 +37,23 @@ public class AuthenticatorUserModel {
                 UserModel userNameResult = context.getSession().users()
                         .getUserByUsername(context.getRealm(), loginAliasValue);
                 if (userNameResult != null) {
-                    return userNameResult;
+                    //check whether the user has the orgValue or not
+                    if (attributeKey.contains("/")) {
+                        String org = attributeKey.split("/")[0];
+                        
+                        List<String> attributes = userNameResult.getAttributes().get(org);
+                        if (attributes.size() > 0) {
+                            if (attributes.contains(orgValue)) {
+                                return userNameResult;
+                            }
+                        }
+                    }
+                    List<String> attributes = userNameResult.getAttributes().get(attributeKey);
+                    if (attributes.size() > 0) {
+                        if (attributes.contains(orgValue)) {
+                            return userNameResult;
+                        }
+                    }
                 }
                 
                 if (attributeKey.contains("/")) {
